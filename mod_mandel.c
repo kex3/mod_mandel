@@ -121,6 +121,9 @@ static int mod_mandel_method_handler (request_rec *r)
 	maxIter += (896 / 22) * z;
 
 
+	unsigned char red = 0, green = 0, blue = 0;
+	double halfIter = maxIter / 2.0;
+
 	for (loopy = 0; loopy < tilesize; loopy++)
 	{
 		long double cIm = maxIm - ( loopy * imFactor );
@@ -149,9 +152,6 @@ static int mod_mandel_method_handler (request_rec *r)
 
 			if (isInside == 0)
 			{
-				unsigned char red, green, blue;
-				double halfIter = maxIter / 2.0;
-
 				if (n < (maxIter / 2.0) - 1.0)
 				{
 					red = 255 * (n / halfIter);
@@ -186,7 +186,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	LodePNG_Text_add(&encoder.infoPng.text, "Comment", "Created with LodePNG");
 
 	// naïve anti-alias
-/*int antitilesize = tilesize / 2;
+	/*int antitilesize = tilesize / 2;
 
 	unsigned char *antialiasImgBuf = malloc(antitilesize * antitilesize * 4);
 
