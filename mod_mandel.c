@@ -115,10 +115,10 @@ static int mod_mandel_method_handler (request_rec *r)
 	long double reFactor = (maxRe - minRe) / ( 1.0 * (tilesize - 1));
 	long double imFactor = (maxIm - minIm) / ( 1.0 * (tilesize - 1));
 
-	int maxIter = 128, n;
+	int maxIter = 1024, n;
 	int loopx, loopy;
 
-	maxIter += (896 / 22) * z;
+	//maxIter += (2048 / 30) * z;
 
 
 	unsigned char red = 0, green = 0, blue = 0;
@@ -152,7 +152,7 @@ static int mod_mandel_method_handler (request_rec *r)
 
 			if (isInside == 0)
 			{
-				if (n < (maxIter / 2.0) - 1.0)
+				/*if (n < (maxIter / 2.0) - 1.0)
 				{
 					red = 255 * (n / halfIter);
 					green = 0;
@@ -161,11 +161,13 @@ static int mod_mandel_method_handler (request_rec *r)
 					red = 255;
 					green = 255 * ((n - halfIter) / halfIter);
 					blue = 255 * ((n - halfIter) / halfIter);
-				}
+				}*/
 
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = red;
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = green;
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = blue;
+				n = n % 1024;
+
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = pal_red[n];
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = pal_green[n];
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = pal_blue[n];
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
 			} else {
 				//valbuf[x * y] = 0;
