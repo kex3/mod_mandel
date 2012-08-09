@@ -186,34 +186,6 @@ static int mod_mandel_method_handler (request_rec *r)
 	LodePNG_Encoder_init(&encoder);
 	encoder.settings.zlibsettings.windowSize = 2048;
 	LodePNG_Text_add(&encoder.infoPng.text, "Comment", "Created with LodePNG");
-
-	// naïve anti-alias
-	/*int antitilesize = tilesize / 2;
-
-	unsigned char *antialiasImgBuf = malloc(antitilesize * antitilesize * 4);
-
-	int offset0 = 0, offset1 = 4, offset2 = tilesize * 4, offset3 = (tilesize + 1) * 4;
-	for(y = 0; y < antitilesize; y++)
-	{
-		for(x = 0; x < antitilesize; x++)
-		{
-			int pos = (4 * tilesize * y) + (4 * x);
-
-			//for(i = 0; i < 3; i++)
-			//{
-				antialiasImgBuf[(4 * y * antitilesize) + (4 * x)] =
-					(imgBuf[pos + offset0] + imgBuf[pos + offset1] + imgBuf[pos + offset2] + imgBuf[pos + offset3]) / 4;
-				antialiasImgBuf[1 + (4 * y * antitilesize) + (4 * x)] = 0;
-				antialiasImgBuf[2 + (4 * y * antitilesize) + (4 * x)] = 0;
-				antialiasImgBuf[3 + (4 * y * antitilesize) + (4 * x)] = 255;
-
-
-			//	pos++;
-			//}
-				
-		}
-	}*/
-
 	LodePNG_Encoder_encode(&encoder, &image, &bufferSize, imgBuf, tilesize, tilesize);
 
 	if(encoder.error)
