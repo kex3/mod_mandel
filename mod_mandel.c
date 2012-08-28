@@ -53,43 +53,12 @@ static int mod_mandel_method_handler (request_rec *r)
 	}
 
 	// Strip out the numbers, google maps coordinate style
-	long x, y, z, i;
+	long long x, y, z, i;
 	int j, state = 0, ctr = 0, numlen = 16, tilesize = 256;
 	char *numbuf = malloc(numlen);
 	long *valbuf;
 
-	for (i = 1; r->path_info[i] != 0; i++)
-	{
-		if (r->path_info[i] != '/')
-		{
-			numbuf[ctr++] = r->path_info[i];
-
-			if (ctr == numlen)
-			{
-				fprintf(stderr, "mod_mandel: number too large (>%d chars)", numlen);
-				free(numbuf);
-				return DECLINED;
-			}
-		} else {
-			switch(state)
-			{
-				case 0:
-					x = atoi(numbuf);
-					break;
-				case 1:
-					y = atoi(numbuf);
-					break;
-			}
-			
-			memset(numbuf, 0, sizeof(numbuf));
-
-			state++;
-			ctr = 0;
-		}
-	}
-
-	z = atoi(numbuf);
-	free(numbuf);
+	sscanf(r->path_info, "/%d/%d/%d", &x, &y, &z);
 
 	// And with this less-than-pretty hack, we have x,y,z in variables, time to get cracking
 	//valbuf = malloc(tilesize * tilesize * sizeof(long));
@@ -185,7 +154,13 @@ static int mod_mandel_method_handler (request_rec *r)
 
 	LodePNG_Encoder_init(&encoder);
 	encoder.settings.zlibsettings.windowSize = 2048;
-	LodePNG_Text_add(&encoder.infoPng.text, "Comment", "Created with LodePNG");
+
+	unsigned char *footer;
+	footer = malloc(128);
+
+	sprintf(footer, "Created with LodePNG: (%lld / %lld / %lld)", x, y, z);
+
+	LodePNG_Text_add(&encoder.infoPng.text, "Comment", footer);
 	LodePNG_Encoder_encode(&encoder, &image, &bufferSize, imgBuf, tilesize, tilesize);
 
 	if(encoder.error)
