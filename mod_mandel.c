@@ -54,11 +54,9 @@ static int mod_mandel_method_handler (request_rec *r)
 
 	// Strip out the numbers, google maps coordinate style
 	long long x = 0, y = 0, z = 0, i;
-	int j, state = 0, ctr = 0, numlen = 16, tilesize = 256;
-	char *numbuf = malloc(numlen);
-	long *valbuf;
+	int tilesize = 256;
 
-	sscanf(r->path_info, "/%d/%d/%d", &x, &y, &z);
+	sscanf(r->path_info, "/%lld/%lld/%lld", &x, &y, &z);
 
 	// And with this less-than-pretty hack, we have x,y,z in variables, time to get cracking
 	//valbuf = malloc(tilesize * tilesize * sizeof(long));
@@ -84,14 +82,8 @@ static int mod_mandel_method_handler (request_rec *r)
 	long double reFactor = (maxRe - minRe) / ( 1.0 * (tilesize - 1));
 	long double imFactor = (maxIm - minIm) / ( 1.0 * (tilesize - 1));
 
-	int maxIter = 1024, n;
+	int maxIter = 1024;
 	int loopx, loopy;
-
-	//maxIter += (2048 / 30) * z;
-
-
-	unsigned char red = 0, green = 0, blue = 0;
-	double halfIter = maxIter / 2.0;
 
 	for (loopy = 0; loopy < tilesize; loopy++)
 	{
@@ -121,17 +113,6 @@ static int mod_mandel_method_handler (request_rec *r)
 
 			if (isInside == 0)
 			{
-				/*if (n < (maxIter / 2.0) - 1.0)
-				{
-					red = 255 * (n / halfIter);
-					green = 0;
-					blue = 0;
-				} else {
-					red = 255;
-					green = 255 * ((n - halfIter) / halfIter);
-					blue = 255 * ((n - halfIter) / halfIter);
-				}*/
-
 				n = n % 1024;
 
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = pal_red[n];
@@ -139,7 +120,6 @@ static int mod_mandel_method_handler (request_rec *r)
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = pal_blue[n];
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
 			} else {
-				//valbuf[x * y] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = 0;
@@ -155,7 +135,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	LodePNG_Encoder_init(&encoder);
 	encoder.settings.zlibsettings.windowSize = 2048;
 
-	unsigned char *footer;
+	char *footer;
 	footer = malloc(128);
 
 	sprintf(footer, "Created with LodePNG: (%lld / %lld / %lld)", x, y, z);
