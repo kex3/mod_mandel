@@ -53,7 +53,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	}
 
 	// Strip out the numbers, google maps coordinate style
-	long long x, y, z, i;
+	long long x = 0, y = 0, z = 0, i;
 	int j, state = 0, ctr = 0, numlen = 16, tilesize = 256;
 	char *numbuf = malloc(numlen);
 	long *valbuf;
