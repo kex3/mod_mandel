@@ -129,7 +129,7 @@ static int mod_mandel_method_handler (request_rec *r)
 
 	// Map out google map tile coordinates to coordinates in set
 	long double tileSize = 1.0;
-	
+
 	for(i = 0; i < z; i++)
 	{
 		tileSize = tileSize / 2.0;
@@ -143,7 +143,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	long double reFactor = (maxRe - minRe) / ( 1.0 * (tilesize - 1));
 	long double imFactor = (maxIm - minIm) / ( 1.0 * (tilesize - 1));
 
-	long maxIter = 1024;
+	long maxIter = 256;
 	int loopx, loopy;
 
 
@@ -159,12 +159,11 @@ static int mod_mandel_method_handler (request_rec *r)
 
 			unsigned long _r = 0, _g = 0, _b = 0;
 
-			//n = calculate(cIm, cRe, maxIter, 2.0);
 			int innerX, innerY;
 
 			n = iterate(cRe, cIm, 1024, 0, maxIter);
 
-			if (n > 0) {
+			//if (n > 0) {
 				for (innerX = -1; innerX < 2; innerX++) {
 					for (innerY = -1; innerY < 2; innerY++) {
 						int _n;
@@ -189,12 +188,12 @@ static int mod_mandel_method_handler (request_rec *r)
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (pal_blue[n]);*/
 
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
-			} else {
+			/*} else {
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = 0;
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
-			}
+			}*/
 		}
 	}
 
