@@ -11,35 +11,88 @@
       src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBL4V4KVjNJR2opJwPzHPESMzDUfvGliq8&sensor=false">
     </script>
     <script type="text/javascript">
-      var mandelMap = new google.maps.ImageMapType({
-      	'getTileUrl': function(coord, zoom) {
-		return '/tiles/' + coord.x + '/' + coord.y + '/' + zoom
-	},
-	'tileSize': new google.maps.Size(256, 256),
-	'isPng': true,
-	'name': 'Mandel',
-	'alt': 'Mandelbrot set',
-	'maxZoom': 39      });
+	var urlTimer = null;
 
-      function initialize() {
-        var myOptions = {
-          'center': new google.maps.LatLng(0.0, 0.0),
-          'zoom': 0,
-          'mapTypeId': google.maps.MapTypeId.ROADMAP,
-  	  'disableDefaultUI': true,
-	  'panControl': false,
-	  'zoomControl': false,
-	  'mapTypeControl': false,
-	  'scaleControl': false,
-	  'streetViewControl': false,
-	  'overviewMapControl': false
-        };
+	function setHash()
+	{
+		var center = map.getCenter();
+		var oldPos = getHashPos();
 
-        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	map.mapTypes.set('mandel', mandelMap);
-	map.setMapTypeId('mandel');
-	map.panBy(150,250);
-      }
+		if (map.zoom != oldPos.zoom || center.lat() != oldPos.lat || center.lng() != oldPos.lng) {
+			history.pushState({}, "", "#" + map.zoom + "_" + center.lat() + "_" + center.lng());
+		}
+	}
+
+	function getHashPos()
+	{
+		var href = window.location.href;
+
+		var pos = href.replace(/^.*#/, '').split('_');
+
+		if (pos[0] == window.location.href) {
+			return;
+		}
+
+		return {
+			'zoom': parseInt(pos[0], 10),
+			'lat': pos[1] * 1.0,
+			'lng': pos[2] * 1.0
+		};
+	}
+
+	var mandelMap = new google.maps.ImageMapType({
+		'getTileUrl': function(coord, zoom) {
+			return '/tiles/' + coord.x + '/' + coord.y + '/' + zoom
+		},
+		'tileSize': new google.maps.Size(256, 256),
+		'isPng': true,
+		'name': 'Mandel',
+		'alt': 'Mandelbrot set',
+		'maxZoom': 39
+	});
+
+	var moveToHashPos = function() {
+		var hashPos = getHashPos();
+		if (typeof hashPos !== 'undefined') {
+			map.setZoom(hashPos.zoom, 10);
+
+			setTimeout(function() {
+				map.setCenter(new google.maps.LatLng(hashPos.lat, hashPos.lng));
+			}, 500);
+		}
+	}
+
+	function initialize() {
+		var myOptions = {
+			'center': new google.maps.LatLng(0.0, 0.0),
+			'zoom': 0,
+			'mapTypeId': google.maps.MapTypeId.ROADMAP,
+			'disableDefaultUI': true,
+			'panControl': false,
+			'zoomControl': false,
+			'mapTypeControl': false,
+			'scaleControl': false,
+			'streetViewControl': false,
+			'overviewMapControl': false
+		};
+
+		map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+		map.mapTypes.set('mandel', mandelMap);
+		map.setMapTypeId('mandel');
+		map.panBy(150,250);
+
+		google.maps.event.addListener(map, 'bounds_changed', function() {
+			if (urlTimer != null) {
+				clearTimeout(urlTimer);
+			}
+
+			urlTimer = setTimeout(setHash, 1000);
+		});
+
+		moveToHashPos();		
+
+		window.onhashchange = moveToHashPos;
+	}
     </script>
   </head>
   <body onload="initialize()">
