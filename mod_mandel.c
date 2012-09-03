@@ -44,11 +44,8 @@ static void mod_mandel_register_hooks (apr_pool_t *p)
 	ap_hook_handler(mod_mandel_method_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
-inline static int iterate(long double cr, long double ci, long double K, long double f) {
-	int MaxIt = 512;
-	int maxColor = 1024;
-
-	double Cr, Ci, I = 0, R = 0, I2 = I * I, R2 = R * R, Dr = 0, Di = 0, D;
+inline static int iterate(long double cr, long double ci, long double K, long double f, int MaxIt) {
+	long double Cr, Ci, I = 0, R = 0, I2 = I * I, R2 = R * R, Dr = 0, Di = 0, D;
 	int n = 0;
 
 	if (f == 0) {
@@ -74,12 +71,10 @@ inline static int iterate(long double cr, long double ci, long double K, long do
 		return 0; // interior
 
 	else { // boundary and exterior
-		R = -K
-				* log(
-						log(R2 + I2)
-								* sqrt((R2 + I2) / (Dr * Dr + Di * Di))); // compute distance
-		if (R < 0)
+		R = -K * log( log( R2 + I2 ) * sqrt((R2 + I2) / (Dr * Dr + Di * Di))); // compute distance
+		if (R < 0) {
 			R = 0;
+		}
 
 		return (int) (R / 8);
 	};
@@ -167,14 +162,14 @@ static int mod_mandel_method_handler (request_rec *r)
 			//n = calculate(cIm, cRe, maxIter, 2.0);
 			int innerX, innerY;
 
-			n = iterate(cRe, cIm, 1024, 0);
+			n = iterate(cRe, cIm, 1024, 0, maxIter);
 
 			if (n > 0) {
 				for (innerX = -1; innerX < 2; innerX++) {
 					for (innerY = -1; innerY < 2; innerY++) {
 						int _n;
 
-						_n = iterate(cRe + ((innerX * 0.5) * reFactor), cIm  + ((innerY * 0.5) * imFactor), 1024, 0);
+						_n = iterate(cRe + ((innerX * 0.5) * reFactor), cIm  + ((innerY * 0.5) * imFactor), 1024, 0, maxIter);
 
 						_n = _n % 1024;
 

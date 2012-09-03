@@ -19,19 +19,26 @@
 	'isPng': true,
 	'name': 'Mandel',
 	'alt': 'Mandelbrot set',
-	'maxZoom': 39
-      });
+	'maxZoom': 39      });
 
       function initialize() {
         var myOptions = {
-          center: new google.maps.LatLng(0.0, 0.0),
-          zoom: 0,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
+          'center': new google.maps.LatLng(0.0, 0.0),
+          'zoom': 0,
+          'mapTypeId': google.maps.MapTypeId.ROADMAP,
+  	  'disableDefaultUI': true,
+	  'panControl': false,
+	  'zoomControl': false,
+	  'mapTypeControl': false,
+	  'scaleControl': false,
+	  'streetViewControl': false,
+	  'overviewMapControl': false
         };
 
-        var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 	map.mapTypes.set('mandel', mandelMap);
 	map.setMapTypeId('mandel');
+	map.panBy(150,250);
       }
     </script>
   </head>
