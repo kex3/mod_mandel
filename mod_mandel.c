@@ -44,6 +44,72 @@ static void mod_mandel_register_hooks (apr_pool_t *p)
 	ap_hook_handler(mod_mandel_method_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
+inline static int iterate(double cr, double ci, double K, double f) {
+	int MaxIt = 256;
+	int maxColor = 1024;
+
+	double Cr, Ci, I = 0, R = 0, I2 = I * I, R2 = R * R, Dr = 0, Di = 0, D;
+	int n = 0;
+
+	if (f == 0) {
+		Cr = cr;
+		Ci = ci;
+	} else {
+		Cr = ci;
+		Ci = cr;
+	}
+
+	do {
+		D = 2 * (R * Dr - I * Di) + 1;
+		Di = 2 * (R * Di + I * Dr);
+		Dr = D;
+		I = (R + R) * I + Ci;
+		R = R2 - I2 + Cr;
+		R2 = R * R;
+		I2 = I * I;
+		n++;
+	} while ((R2 + I2 < 100.) && (n < MaxIt));
+
+	if (n == MaxIt)
+		return 0; // interior
+
+	else { // boundary and exterior
+		R = -K
+				* log(
+						log(R2 + I2)
+								* sqrt((R2 + I2) / (Dr * Dr + Di * Di))); // compute distance
+		if (R < 0)
+			R = 0;
+
+		return (int) (R / 8);
+	};
+}
+
+/*static inline long calculate(long double cIm, long double cRe, long maxIter, long double bailout)
+{
+	long n;
+	long double zRe = cRe, zIm = cIm, zDe = 0.0;
+
+	// z'n+1 = 2z'nzn
+
+	for (n = 0; n < maxIter; n++)
+	{
+		long double zRe2 = zRe*zRe,
+			zIm2 = zIm * zIm;
+
+		if (zRe2 + zIm2 >= bailout)
+		{
+			return n;
+		}
+
+		zDe = 2 * zDe * zRe;
+		zIm = 2*zRe*zIm + cIm;
+		zRe = zRe2 - zIm2 + cRe;
+	}
+
+	return 0;
+}*/
+
 static int mod_mandel_method_handler (request_rec *r)
 {
 	// Are we in the "tiles directory"? Do we have the correct path depth (X,Y,Z)?
@@ -82,7 +148,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	long double reFactor = (maxRe - minRe) / ( 1.0 * (tilesize - 1));
 	long double imFactor = (maxIm - minIm) / ( 1.0 * (tilesize - 1));
 
-	int maxIter = 1024;
+	long maxIter = 1024;
 	int loopx, loopy;
 
 	for (loopy = 0; loopy < tilesize; loopy++)
@@ -92,26 +158,26 @@ static int mod_mandel_method_handler (request_rec *r)
 		for (loopx = 0; loopx < tilesize; loopx++)
 		{
 			long double cRe = minRe + ( loopx * reFactor );
+			long n;
 
-			long double zRe = cRe, zIm = cIm;
-			int isInside = 1, n;
+			//n = calculate(cIm, cRe, maxIter, 2.0);
+			n = 0;
+			int innerX, innerY;
 
-			for (n = 0; n < maxIter; n++)
-			{
-				long double zRe2 = zRe*zRe,
-					zIm2 = zIm * zIm;
-
-				if (zRe2 + zIm2 > 4.0)
-				{
-					isInside = 0;
-					break;
+			for (innerX = -1; innerX < 1; innerX++) {
+				for (innerY = -1; innerY < 1; innerY++) {
+					if (innerX != 0 && innerY != 0) {
+						n += iterate(cRe + (innerX * 0.5 * reFactor), cIm  + (innerY * 0.5 * imFactor), 1024, 0);
+					}
 				}
-
-				zIm = 2*zRe*zIm + cIm;
-				zRe = zRe2 - zIm2 + cRe;
 			}
 
-			if (isInside == 0)
+			n = n / 8;
+
+			n += iterate(cRe, cIm, 1024, 0);
+			n /= 2;
+
+			if (n > 0)
 			{
 				n = n % 1024;
 

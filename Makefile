@@ -1,7 +1,7 @@
-default: build launch
+default: build
 
 build:
-	apxs2 -i -a -Wc,-Wall -c mod_mandel.c lodepng.c
+	apxs2 -i -a -Wc,-Wall -lm -c mod_mandel.c lodepng.c
 
 launch:
 	/etc/init.d/apache2 restart
