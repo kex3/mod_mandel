@@ -44,8 +44,8 @@ static void mod_mandel_register_hooks (apr_pool_t *p)
 	ap_hook_handler(mod_mandel_method_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
-inline static int iterate(double cr, double ci, double K, double f) {
-	int MaxIt = 256;
+inline static int iterate(long double cr, long double ci, long double K, long double f) {
+	int MaxIt = 512;
 	int maxColor = 1024;
 
 	double Cr, Ci, I = 0, R = 0, I2 = I * I, R2 = R * R, Dr = 0, Di = 0, D;
@@ -151,6 +151,8 @@ static int mod_mandel_method_handler (request_rec *r)
 	long maxIter = 1024;
 	int loopx, loopy;
 
+
+
 	for (loopy = 0; loopy < tilesize; loopy++)
 	{
 		long double cIm = maxIm - ( loopy * imFactor );
@@ -160,30 +162,37 @@ static int mod_mandel_method_handler (request_rec *r)
 			long double cRe = minRe + ( loopx * reFactor );
 			long n;
 
+			unsigned long _r = 0, _g = 0, _b = 0;
+
 			//n = calculate(cIm, cRe, maxIter, 2.0);
-			n = 0;
 			int innerX, innerY;
 
-			for (innerX = -1; innerX < 1; innerX++) {
-				for (innerY = -1; innerY < 1; innerY++) {
-					if (innerX != 0 && innerY != 0) {
-						n += iterate(cRe + (innerX * 0.5 * reFactor), cIm  + (innerY * 0.5 * imFactor), 1024, 0);
+			n = iterate(cRe, cIm, 1024, 0);
+
+			if (n > 0) {
+				for (innerX = -1; innerX < 2; innerX++) {
+					for (innerY = -1; innerY < 2; innerY++) {
+						int _n;
+
+						_n = iterate(cRe + ((innerX * 0.5) * reFactor), cIm  + ((innerY * 0.5) * imFactor), 1024, 0);
+
+						_n = _n % 1024;
+
+						_r += pal_red[_n];
+						_g += pal_green[_n];
+						_b += pal_blue[_n];
 					}
 				}
-			}
 
-			n = n / 8;
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = (int) (_r / 9L);
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = (int) (_g / 9L);
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (_b / 9L);
 
-			n += iterate(cRe, cIm, 1024, 0);
-			n /= 2;
 
-			if (n > 0)
-			{
-				n = n % 1024;
+				/*imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = (int) (pal_red[n]);
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = (int) (pal_green[n]);
+				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (pal_blue[n]);*/
 
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = pal_red[n];
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = pal_green[n];
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = pal_blue[n];
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
 			} else {
 				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = 0;
@@ -199,7 +208,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	LodePNG_Encoder encoder;
 
 	LodePNG_Encoder_init(&encoder);
-	encoder.settings.zlibsettings.windowSize = 2048;
+	encoder.settings.zlibsettings.windowSize = 128;
 
 	char *footer;
 	footer = malloc(128);
@@ -212,6 +221,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	if(encoder.error)
 	{
 		fprintf(stderr, "Encoder error %u: %s\n", encoder.error, LodePNG_error_text(encoder.error));
+		return DECLINED;
 	}
 
 	r->content_type = "image/png";
