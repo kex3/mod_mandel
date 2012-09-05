@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!--meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width"/ -->
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width"/>
+    <title>mandel.kex3.com</title>
     <style type="text/css">
       html { height: 100% }
       body { height: 100%; margin: 0; padding: 0 }
@@ -18,9 +19,15 @@
 		var center = map.getCenter();
 		var oldPos = getHashPos();
 
-		if (map.zoom != oldPos.zoom || center.lat() != oldPos.lat || center.lng() != oldPos.lng) {
-			history.pushState({}, "", "#" + map.zoom + "_" + center.lat() + "_" + center.lng());
+		if (typeof hashPos !== 'undefined')
+		{
+			if (map.zoom == oldPos.zoom && center.lat() == oldPos.lat && center.lng() == oldPos.lng) {
+				return;
+			}
 		}
+
+
+		history.pushState({}, "", "#" + map.zoom + "_" + center.lat() + "_" + center.lng());
 	}
 
 	function getHashPos()
@@ -57,8 +64,8 @@
 			map.setZoom(hashPos.zoom, 10);
 
 			setTimeout(function() {
-				map.setCenter(new google.maps.LatLng(hashPos.lat, hashPos.lng));
-			}, 500);
+				map.panTo(new google.maps.LatLng(hashPos.lat, hashPos.lng));
+			}, 150);
 		}
 	}
 
