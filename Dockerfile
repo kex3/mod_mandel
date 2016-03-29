@@ -1,8 +1,7 @@
-FROM ubuntu
+FROM debian
 
 RUN apt-get update
 RUN apt-get -y install apache2 apache2-dev build-essential
-RUN update-rc.d apache2 disable default
 
 ADD . /var/www
 RUN cd /var/www/ && make
