@@ -80,31 +80,6 @@ inline static int iterate(long double cr, long double ci, long double K, long do
 	};
 }
 
-/*static inline long calculate(long double cIm, long double cRe, long maxIter, long double bailout)
-{
-	long n;
-	long double zRe = cRe, zIm = cIm, zDe = 0.0;
-
-	// z'n+1 = 2z'nzn
-
-	for (n = 0; n < maxIter; n++)
-	{
-		long double zRe2 = zRe*zRe,
-			zIm2 = zIm * zIm;
-
-		if (zRe2 + zIm2 >= bailout)
-		{
-			return n;
-		}
-
-		zDe = 2 * zDe * zRe;
-		zIm = 2*zRe*zIm + cIm;
-		zRe = zRe2 - zIm2 + cRe;
-	}
-
-	return 0;
-}*/
-
 static int mod_mandel_method_handler (request_rec *r)
 {
 	// Are we in the "tiles directory"? Do we have the correct path depth (X,Y,Z)?
@@ -119,8 +94,6 @@ static int mod_mandel_method_handler (request_rec *r)
 
 	sscanf(r->path_info, "/%lld/%lld/%lld", &x, &y, &z);
 
-	// And with this less-than-pretty hack, we have x,y,z in variables, time to get cracking
-	//valbuf = malloc(tilesize * tilesize * sizeof(long));
 	unsigned char *imgBuf = (unsigned char *) malloc(tilesize * tilesize * 4);
 	size_t bufferSize;
 
@@ -146,7 +119,8 @@ static int mod_mandel_method_handler (request_rec *r)
 	long maxIter = 256;
 	int loopx, loopy;
 
-
+	// Gently increase maximum iterations as we zoom in
+	maxIter = maxIter + (maxIter * (0.05 * (z * 1.0)));
 
 	for (loopy = 0; loopy < tilesize; loopy++)
 	{
@@ -163,37 +137,26 @@ static int mod_mandel_method_handler (request_rec *r)
 
 			n = iterate(cRe, cIm, 1024, 0, maxIter);
 
-			//if (n > 0) {
-				for (innerX = -1; innerX < 2; innerX++) {
-					for (innerY = -1; innerY < 2; innerY++) {
-						int _n;
+			// Calculate a 3*3 grid per pixel, for antialiasing
+			for (innerX = -1; innerX < 2; innerX++) {
+				for (innerY = -1; innerY < 2; innerY++) {
+					int _n;
 
-						_n = iterate(cRe + ((innerX * 0.5) * reFactor), cIm  + ((innerY * 0.5) * imFactor), 1024, 0, maxIter);
+					_n = iterate(cRe + ((innerX * 0.5) * reFactor), cIm  + ((innerY * 0.5) * imFactor), 1024, 0, maxIter);
 
-						_n = _n % 1024;
+					_n = _n % 1024;
 
-						_r += pal_red[_n];
-						_g += pal_green[_n];
-						_b += pal_blue[_n];
-					}
+					_r += pal_red[_n];
+					_g += pal_green[_n];
+					_b += pal_blue[_n];
 				}
+			}
 
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = (int) (_r / 9L);
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = (int) (_g / 9L);
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (_b / 9L);
+			imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = (int) (_r / 9L);
+			imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = (int) (_g / 9L);
+			imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (_b / 9L);
 
-
-				/*imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = (int) (pal_red[n]);
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = (int) (pal_green[n]);
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = (int) (pal_blue[n]);*/
-
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
-			/*} else {
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 0] = 0;
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 1] = 0;
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 2] = 0;
-				imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
-			}*/
+			imgBuf[(4 * tilesize * loopy) + (4 * loopx) + 3] = 255;
 		}
 	}
 
