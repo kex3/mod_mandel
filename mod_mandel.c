@@ -188,6 +188,7 @@ static int mod_mandel_method_handler (request_rec *r)
 	LodePNG_Encoder_cleanup(&encoder);
 	free(imgBuf);
 	free(image);
+	free(footer);
 
 	return OK;
 }
